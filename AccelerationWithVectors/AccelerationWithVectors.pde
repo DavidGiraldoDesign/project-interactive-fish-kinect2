@@ -1,3 +1,17 @@
+/**
+ * Acceleration with Vectors 
+ * by Daniel Shiffman.  
+ * 
+ * Demonstration of the basics of motion with vector.
+ * A "Mover" object stores location, velocity, and acceleration as vectors
+ * The motion is controlled by affecting the acceleration (in this case towards the mouse)
+ *
+ * For more examples of simulating motion and physics with vectors, see 
+ * Simulate/ForcesWithVectors, Simulate/GravitationalAttraction3D
+ */
+
+// A Mover object
+import java.util.*;
 import KinectPV2.KJoint;
 import KinectPV2.*;
 
@@ -7,9 +21,18 @@ int [] rawData;
 //Distance Threashold
 int maxD = 2000; // 4.5mx
 int minD = 50;  //  50cm
+float kx, ky;
+
+
+LinkedList<Mover> bichos = new LinkedList<Mover>();
+
+float g;
+void settings() {
+  // size(1500, 800);
+  fullScreen();
+}
 
 void setup() {
-  size(1240, 720, P3D);
   colorMode(HSB, 100);
   kinect = new KinectPV2(this);
 
@@ -18,30 +41,24 @@ void setup() {
   kinect.enablePointCloud(true);
 
   kinect.init();
+
+  for (int i = 0; i<80; i++) {
+    Mover b = new Mover();
+    b.start();
+    bichos.add(b);
+  }
 }
 
 void draw() {
-  background(0, 0, 50);
+background(50, 60, 130);
   this.depthImg = kinect.getDepthImage();
   this.rawData = kinect.getRawDepthData();
   this.cloudImg = kinect.getPointCloudDepthImage();
-
-  //image(kinect.getDepthImage(), 0, 0);
-
-  /* obtain the point cloud as a PImage
-   * Each pixel of the PointCloudDepthImage corresponds to the Z value
-   * of Point Cloud i.e. distances.
-   * The Point cloud values are mapped from (0 - 4500) mm  to gray color format (0 - 255)
-   */
-  //image(cloudImg, 512, 0);
-
-  //obtain the raw depth data in integers from [0 - 4500]
-
   cloudImg.loadPixels();
- boolean first = false;
+  boolean first = false;
   for (int y = 0; y < 424; y++ ) {
     for (int x = 0; x < 512; x++ ) {
-     
+
       int i = x+y*512;
 
       int module = 5;
@@ -60,15 +77,18 @@ void draw() {
           colorMode(HSB);
 
           float d = map(b, 0, 100, 0, 50);
-
-          if (b>10 && b<20) {
+          //ellipse(cx, cy-offset, d, d);
+          if (b>10 && b<25) {
             if (!first) {  
               noStroke();
               fill(130, 80, 100);
-              ellipse(cx, cy-offset, 100, 100);
+              // 
+              kx=cx;
+              ky= cy-offset;
               first=true;
+              background(50, 80, 130);
             }
-          } 
+          }
         }
       }
     }
@@ -78,26 +98,13 @@ void draw() {
   //Threahold of the point Cloud.
   kinect.setLowThresholdPC(minD);
   kinect.setHighThresholdPC(maxD);
-}
+  
 
-void keyPressed() {
-  if (key == '1') {
-    minD += 10;
-    println("Change min: "+minD);
-  }
+  
 
-  if (key == '2') {
-    minD -= 10;
-    println("Change min: "+minD);
-  }
-
-  if (key == '3') {
-    maxD += 50;
-    println("Change max: "+maxD);
-  }
-
-  if (key == '4') {
-    maxD -=50;
-    println("Change max: "+maxD);
+  ellipse(kx, ky, 10, 10);
+  for (Mover m : bichos) {
+    m.display();
+    m.perseguir(kx, ky);
   }
 }
