@@ -74,7 +74,7 @@ class Mover extends Thread {
 
         direccion = new PVector(width/2, height/2);
       
-      a=0.01;
+      a=0.02;
       topspeed = (int)random(10, 20);
     }
     //}
