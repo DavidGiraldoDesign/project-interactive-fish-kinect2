@@ -10,14 +10,16 @@ int [] rawData;
 //Distance Threashold
 int maxD = 2000; // 4.5mx
 int minD = 50;  //  50cm
-// Averages
-int startSampleX, startSampleY, endSampleX, endSampleY;
-int sampleSizeX, sampleSizeY;
-boolean averageCreated = false;
-int [] XYAverage = new int [2];
-HashSet KXsample = new HashSet();
-HashSet KYsample = new HashSet();
-
+/*/ Averages
+ int startSampleX, startSampleY, endSampleX, endSampleY;
+ int sampleSizeX, sampleSizeY;
+ boolean averageCreated = false;
+ int [] XYAverage = new int [2];
+ HashSet KXsample = new HashSet();
+ HashSet KYsample = new HashSet();*/
+ArrayList<XYAverageZone> zones = new ArrayList<XYAverageZone>();
+int xx=200;
+int yy=200;
 void setup() {
   //size(1240, 720, P3D);
   fullScreen(P3D);
@@ -29,13 +31,19 @@ void setup() {
   kinect.enablePointCloud(true);
 
   kinect.init();
-  //000000000000000000000000000000000000000Average
-  startSampleX=0;
-  startSampleY=0;
-  endSampleX=500;
-  endSampleY=500;
-  sampleSizeX = 8;
-  sampleSizeY = 8;
+  /*/000000000000000000000000000000000000000Average
+   startSampleX=0;
+   startSampleY=0;
+   endSampleX=500;
+   endSampleY=500;
+   sampleSizeX = 8;
+   sampleSizeY = 8;*/
+  for (int y = 0; y < height; y+=yy ) {
+    for (int x = 0; x < width; x+=xx ) {
+      zones.add(new XYAverageZone(x, y, x+xx, y+yy));
+    }
+  }
+  println(zones.size());
 }
 
 void draw() {
@@ -45,16 +53,18 @@ void draw() {
   this.cloudImg = kinect.getPointCloudDepthImage();
 
   //image(cloudImg, 512, 0);
-  println("------ loadPixels");
 
   cloudImg.loadPixels();
-  clearSample();
+  for (XYAverageZone xy : zones) {
+    xy.clearSample();
+  }
+
   for (int y = 0; y < 424; y++ ) {
     for (int x = 0; x < 512; x++ ) {
 
       int i = x+y*512;
 
-      int module = 5;
+      int module = 3;
 
       if (y%module==0) {
         if (x%module==0) {
@@ -74,9 +84,11 @@ void draw() {
 
           if (b>5 && b<20) {
 
-            if (cy < height) {
-              gatheringSamples(cx, cy-offset);
+            //if (cy < height) {
+            for (XYAverageZone xy : zones) {
+              xy.gatheringSamples(cx, cy-offset);
             }
+            //}
 
             ellipse(cx, cy-offset, d, d);
           }
@@ -85,63 +97,72 @@ void draw() {
     }
   }
   cloudImg.updatePixels();
-  createXYAverage();
+  for (XYAverageZone xy : zones) {
+    xy.createXYAverage();
+  }
+  //zones.get(0).createXYAverage();
   noStroke(); 
   fill(200, 50, 50);
-  if (IsAverageCreated()==true) {
-    ellipse(XYAverage[0], XYAverage[1], 50, 50);
+  for (XYAverageZone xy : zones) {
+
+    if (xy.IsAverageCreated()==true) {
+      ellipse(xy.getAverageXY()[0], xy.getAverageXY()[1], 50, 50);
+    }
   }
-
-
 
   //Threahold of the point Cloud.
   kinect.setLowThresholdPC(minD);
   kinect.setHighThresholdPC(maxD);
   noFill();
   stroke(255, 0, 0);
-  rect(startSampleX, startSampleY, endSampleX, endSampleY);
-}
-//==================================================================== zone sampling methods
-void clearSample() {
-  KXsample.clear();
-  KYsample.clear();
-}
-//int startSampleX, startSampleY, endSampleX, endSampleY;
-//int sampleSizeX, sampleSizeY;
-void gatheringSamples(int xSample, int ySample) {
-
-  if (xSample >= startSampleX && xSample <= endSampleX && ySample >= startSampleY && ySample <= endSampleY) {
-    KXsample.add(xSample);
-    KYsample.add(ySample);
+  //rect(startSampleX, startSampleY, endSampleX, endSampleY);
+  for (int y = 0; y < height; y+=xx ) {
+    for (int x = 0; x < width; x+=yy ) {
+      rect(x, y, xx, yy);
+    }
   }
 }
-
-void createXYAverage() {
-  if (KXsample.size()>= sampleSizeX && KYsample.size()>= sampleSizeY) {
-    XYAverage[0] = getAverage(KXsample);
-    XYAverage[1] = getAverage(KYsample);
-    averageCreated = true;
-  } else {
-    XYAverage[0] = 0;
-    XYAverage[1] = 0;
-    averageCreated = false;
-  }
-}
-boolean IsAverageCreated() {
-  return averageCreated;
-}
-int getAverage (HashSet set) {
-  int total=0;
-  int average=0;
-  Iterator<Integer> sampleIterator = set.iterator();
-  while (sampleIterator.hasNext()) {
-    int sample = sampleIterator.next();
-    total +=sample;
-    average= round(total/set.size());
-  }
-  return average;
-}
-
+/*/==================================================================== zone sampling methods
+ void clearSample() {
+ KXsample.clear();
+ KYsample.clear();
+ }
+ //int startSampleX, startSampleY, endSampleX, endSampleY;
+ //int sampleSizeX, sampleSizeY;
+ void gatheringSamples(int xSample, int ySample) {
+ 
+ if (xSample >= startSampleX && xSample <= endSampleX && ySample >= startSampleY && ySample <= endSampleY) {
+ KXsample.add(xSample);
+ KYsample.add(ySample);
+ }
+ }
+ 
+ void createXYAverage() {
+ if (KXsample.size()>= sampleSizeX && KYsample.size()>= sampleSizeY) {
+ XYAverage[0] = getAverage(KXsample);
+ XYAverage[1] = getAverage(KYsample);
+ averageCreated = true;
+ } else {
+ XYAverage[0] = 0;
+ XYAverage[1] = 0;
+ averageCreated = false;
+ }
+ }
+ boolean IsAverageCreated() {
+ return averageCreated;
+ }
+ int getAverage (HashSet set) {
+ int total=0;
+ int average=0;
+ Iterator<Integer> sampleIterator = set.iterator();
+ while (sampleIterator.hasNext()) {
+ int sample = sampleIterator.next();
+ total +=sample;
+ average= round(total/set.size());
+ }
+ return average;
+ }
+ */
 void keyPressed() {
   if (key == '1') {
     minD += 10;
