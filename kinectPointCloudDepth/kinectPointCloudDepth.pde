@@ -7,15 +7,16 @@ import java.util.Iterator;
 KinectPV2 kinect;
 PImage depthImg, cloudImg, canvas;
 int [] rawData;
-int [] Xsample, Ysample;
-
-HashSet KXsample = new HashSet();
-HashSet KYsample = new HashSet();
-
-
 //Distance Threashold
 int maxD = 2000; // 4.5mx
 int minD = 50;  //  50cm
+// Averages
+int startSampleX, startSampleY, endSampleX, endSampleY;
+int sampleSizeX, sampleSizeY;
+boolean averageCreated = false;
+int [] XYAverage = new int [2];
+HashSet KXsample = new HashSet();
+HashSet KYsample = new HashSet();
 
 void setup() {
   //size(1240, 720, P3D);
@@ -28,9 +29,13 @@ void setup() {
   kinect.enablePointCloud(true);
 
   kinect.init();
-
-  Xsample = new int[10];
-  Ysample = new int[10];
+  //000000000000000000000000000000000000000Average
+  startSampleX=0;
+  startSampleY=0;
+  endSampleX=500;
+  endSampleY=500;
+  sampleSizeX = 8;
+  sampleSizeY = 8;
 }
 
 void draw() {
@@ -40,62 +45,91 @@ void draw() {
   this.cloudImg = kinect.getPointCloudDepthImage();
 
   //image(cloudImg, 512, 0);
+  println("------ loadPixels");
 
-  if (!test) {
-    println("------ loadPixels");
+  cloudImg.loadPixels();
+  clearSample();
+  for (int y = 0; y < 424; y++ ) {
+    for (int x = 0; x < 512; x++ ) {
 
-    cloudImg.loadPixels();
+      int i = x+y*512;
 
-    KXsample.clear();
-    KYsample.clear();
-    for (int y = 0; y < 424; y++ ) {
-      for (int x = 0; x < 512; x++ ) {
+      int module = 5;
 
-        int i = x+y*512;
+      if (y%module==0) {
+        if (x%module==0) {
+          int cx = round(map(x, 0, 512, 0, width));
+          int cy = round(map(y, 0, 424, 0, (424*width)/512));
 
-        int module = 5;
-        if (y%module==0) {
-          if (x%module==0) {
-            int cx = round(map(x, 0, 512, 0, width));
-            int cy = round(map(y, 0, 424, 0, (424*width)/512));
+          int offset = ((424*width)/512 - height)/2;
 
-            int offset = ((424*width)/512 - height)/2;
+          float h = hue(cloudImg.pixels[i]);
+          float s = saturation(cloudImg.pixels[i]);
+          float b = brightness(cloudImg.pixels[i]);
+          float a = alpha(cloudImg.pixels[i]);
 
-            float h = hue(cloudImg.pixels[i]);
-            float s = saturation(cloudImg.pixels[i]);
-            float b = brightness(cloudImg.pixels[i]);
-            float a = alpha(cloudImg.pixels[i]);
+          colorMode(HSB);
 
-            colorMode(HSB);
+          float d = map(b, 0, 100, 0, 50);
 
-            float d = map(b, 0, 100, 0, 50);
+          if (b>5 && b<20) {
 
-            if (b>5 && b<20) {
+            if (cy < height) {
+              gatheringSamples(cx, cy-offset);
+            }
 
-              if (cy < height) {
-                KXsample.add(cx);
-                KYsample.add(cy-offset);
-              }
-
-              ellipse(cx, cy-offset, d, d);
-                      }
+            ellipse(cx, cy-offset, d, d);
           }
         }
       }
     }
-    cloudImg.updatePixels();
- 
-    fill(200, 50, 50);
-    ellipse(getAverage(KXsample), getAverage(KYsample), 50, 50);
-
   }
+  cloudImg.updatePixels();
+  createXYAverage();
+  noStroke(); 
+  fill(200, 50, 50);
+  if (IsAverageCreated()==true) {
+    ellipse(XYAverage[0], XYAverage[1], 50, 50);
+  }
+
 
 
   //Threahold of the point Cloud.
   kinect.setLowThresholdPC(minD);
   kinect.setHighThresholdPC(maxD);
+  noFill();
+  stroke(255, 0, 0);
+  rect(startSampleX, startSampleY, endSampleX, endSampleY);
+}
+//==================================================================== zone sampling methods
+void clearSample() {
+  KXsample.clear();
+  KYsample.clear();
+}
+//int startSampleX, startSampleY, endSampleX, endSampleY;
+//int sampleSizeX, sampleSizeY;
+void gatheringSamples(int xSample, int ySample) {
+
+  if (xSample >= startSampleX && xSample <= endSampleX && ySample >= startSampleY && ySample <= endSampleY) {
+    KXsample.add(xSample);
+    KYsample.add(ySample);
+  }
 }
 
+void createXYAverage() {
+  if (KXsample.size()>= sampleSizeX && KYsample.size()>= sampleSizeY) {
+    XYAverage[0] = getAverage(KXsample);
+    XYAverage[1] = getAverage(KYsample);
+    averageCreated = true;
+  } else {
+    XYAverage[0] = 0;
+    XYAverage[1] = 0;
+    averageCreated = false;
+  }
+}
+boolean IsAverageCreated() {
+  return averageCreated;
+}
 int getAverage (HashSet set) {
   int total=0;
   int average=0;
@@ -103,7 +137,7 @@ int getAverage (HashSet set) {
   while (sampleIterator.hasNext()) {
     int sample = sampleIterator.next();
     total +=sample;
-    average=total/set.size();
+    average= round(total/set.size());
   }
   return average;
 }
