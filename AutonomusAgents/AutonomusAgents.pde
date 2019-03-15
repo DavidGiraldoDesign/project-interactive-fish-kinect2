@@ -37,17 +37,20 @@ void setup() {
 
 void draw() {
 
-  //background(20,20,80);
-  background(0,5);
+  background(20,20,80);
+  //background(255, 5);
   fill(255);
-  ellipse(mouseX, mouseY,50,50);
-  
+  ellipse(mouseX, mouseY, 50, 50);
+
   for (Vehicle v : vs) {
     v.display();
-    v.seek(new PVector(mouseX, mouseY));
+    //v.seek(new PVector(mouseX, mouseY));
+    v.arrive(new PVector(mouseX, mouseY));
   }
-  
 }
 
 void mouseDragged() {
+  for (Vehicle v : vs) {
+    v.flee(new PVector(mouseX, mouseY));
+  }
 }
