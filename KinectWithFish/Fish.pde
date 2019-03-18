@@ -8,7 +8,9 @@ public class Fish extends Thread {
   private float maxforce;
   private boolean followingHand = false;
   private float r;
-  private PImage f = loadImage("/f.png");
+  //private PImage f = loadImage("/f.png");
+  PImage [] fishFrames = new PImage[12];
+  int f=0;
 
   public Fish(float x, float y) {
     acceleration = new PVector(0, 0);
@@ -17,6 +19,9 @@ public class Fish extends Thread {
     r = random(2.0, 8.0);
     maxspeed = random(2, 8);
     maxforce = random(0.05, 0.5);
+    for (int i=0; i<fishFrames.length; i++) {
+      fishFrames[i] = loadImage("/f"+i+".png");
+    }
   }
 
   public void run() {
@@ -73,7 +78,7 @@ public class Fish extends Thread {
 
   void arrive(PVector target) {
 
-    if (dist(target.x, target.y, location.x, location.y)<500) {
+    if (dist(target.x, target.y, location.x, location.y)<400) {
       followingHand = true;
       PVector desired = PVector.sub(target, location);
       float d = desired.mag();
@@ -105,9 +110,21 @@ public class Fish extends Thread {
     force.div(r);//mass
     acceleration.add(force);
   }
+  void animateFish(int x, int y) {
+    imageMode(CENTER);
+    image(fishFrames[f], x, y);
+    if (frameCount%round(r)==0) {
+      
+      if (f<fishFrames.length-1) {
+        f++;
+      } else {
+        f=0;
+      }
+    }
+  }
   void display() {
     float theta = velocity.heading() + PI/2;
-    fill(0, 0, 0, 60);
+    //fill(0, 0, 0, 60);
     noStroke();
     pushMatrix();
     translate(location.x, location.y);
@@ -115,7 +132,8 @@ public class Fish extends Thread {
     imageMode(CENTER);
 
     //ellipse(0, 0, r+20, r+40);
-    image(f, 0, 0);
+    //image(f, 0, 0);
+    animateFish(0, 0);
     /*beginShape();
      vertex(0, -r*2);
      vertex(-r, r*2);

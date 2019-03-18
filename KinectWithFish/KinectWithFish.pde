@@ -2,7 +2,7 @@ import KinectPV2.KJoint;
 import KinectPV2.*;
 //============================================= Kinect and Average
 KinectPV2 kinect;
-PImage depthImg, cloudImg, canvas;
+PImage depthImg, cloudImg, canvas, b, t;
 int [] rawData;
 //Distance Threashold
 int maxD = 2000; // 4.5mx
@@ -24,7 +24,9 @@ void settings() {
   fullScreen(P3D);
 }
 void setup() {
-  colorMode(HSB, 100);
+  b = loadImage("/b.png");
+  t = loadImage("/t.png");
+  colorMode(HSB, 359, 100, 100);
   kinect = new KinectPV2(this);
   kinect.enableDepthImg(true);
   kinect.enablePointCloud(true);
@@ -40,7 +42,7 @@ void setup() {
   }
   println(zones.size());
 
-  for (int i=0; i<50; i++) {
+  for (int i=0; i<120; i++) {
     f = new Fish(random(width), random(height));
     f.start();
     fish.add(f);
@@ -48,11 +50,16 @@ void setup() {
 }
 
 void draw() {
-  fill(10, 10, 30);
-  rect(0, 0, width, height);
+  //fill(240, 70, 20);
+  fill(240, 0, 100);
+  //rect(0, 0, width, height);
+  imageMode(CORNER);
+  image(b, 0, 0, width, height);
   cloudPointAnalizis();
   defaultMovemet();
   displayFish();
+  imageMode(CORNER);
+  image(t, 0, 0, width, height);
 }
 
 void cloudPointAnalizis() {
@@ -98,31 +105,32 @@ void cloudPointAnalizis() {
     xy.createXYAverage();
   }
 
-  noStroke(); 
-  fill(200, 50, 50);
+  //noStroke(); 
+  //fill(200, 50, 50);
   for (XYAverageZone xy : zones) {
     if (xy.IsAverageCreated()==true) {
-      ellipse(xy.getAverageXY()[0], xy.getAverageXY()[1], 50, 50);
+      //ellipse(xy.getAverageXY()[0], xy.getAverageXY()[1], 50, 50);
     }
   }
 
-  noFill();
-  stroke(255, 0, 0);
+  //noFill();
+  //stroke(255, 0, 0);
   for (int y = 0; y < height; y+=xx ) {
     for (int x = 0; x < width; x+=yy ) {
-      rect(x, y, xx, yy);
+      //rect(x, y, xx, yy);
     }
   }
 }
 void defaultMovemet() {
   float ampS = height*0.4;
   float ampC = width*0.4;
-  iS+=0.02;
-  iC+=0.01;
+  iS+=0.01;
+  iC+=0.005;
   float sin = sin(iS)*ampS;
   float cos = cos(iC)*ampC;
   flowX = (width/2)+(cos);
   flowY = (height/2)+(sin);
+  ellipse(flowX, flowY, 10, 10);
 }
 void displayFish() {
   for (Fish v : fish) {
@@ -138,13 +146,9 @@ void displayFish() {
       }
     }
 
-
-
-
     if (v.isFollowingHand()==false) {
       v.seek(new PVector(flowX, flowY));
     }
-
 
     //v.stayWithinWalls();
   }
