@@ -15,8 +15,8 @@ public class XYAverageZone {
     this.startSampleY=startSampleY;
     this.endSampleX=endSampleX;
     this.endSampleY=endSampleY;
-    this.sampleSizeX = 8;
-    this.sampleSizeY = 8;
+    this.sampleSizeX = 5;
+    this.sampleSizeY = 5;
   }
 
   public void clearSample() {

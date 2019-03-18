@@ -6,7 +6,7 @@ class Vehicle extends Thread {
   private PVector target;
   private float maxspeed;
   private float maxforce;
-
+  private boolean followingHand = false;
   private float r;
   private PImage f = loadImage("/f.png");
 
@@ -36,6 +36,22 @@ class Vehicle extends Thread {
     acceleration.mult(0);
   }
 
+  void stayWithinWalls() {
+
+    PVector target;
+
+    if (location.x < 200 || location.x > width-200) {
+      target = new PVector(location.x*-1, location.y);
+
+      arrive(target);
+    }
+    if (location.y < 200 || location.y > height-200) {
+      target = new PVector(location.x, location.y*-1);
+
+      arrive(target);
+    }
+  }
+
   void seek(PVector target) {
     PVector desired = PVector.sub(target, location);
     desired.normalize();
@@ -49,7 +65,6 @@ class Vehicle extends Thread {
   void flee(PVector target) {
     PVector desired = PVector.sub(target, location);
     desired.normalize();
-    desired.mult(maxspeed);
     //PVector steer = PVector.sub(desired, velocity);
     PVector steer = PVector.sub(velocity, desired);
     steer.limit(maxforce);    
@@ -57,27 +72,35 @@ class Vehicle extends Thread {
   }
 
   void arrive(PVector target) {
-    PVector desired = PVector.sub(target, location);
 
-    float d = desired.mag();
-    desired.normalize();
+    if (dist(target.x, target.y, location.x, location.y)<200) {
+      followingHand = true;
+      PVector desired = PVector.sub(target, location);
+      float d = desired.mag();
+      desired.normalize();
 
-    if (d < 300) {
-      float m = map(d, 0, 100, 0, maxspeed);
-      desired.mult(m);
+      if (d < 200) {
+        float m = map(d, 0, 200, 0, maxspeed);
+        desired.mult(m);
+      } else {
+
+        desired.mult(maxspeed);
+      }
+      PVector steer = PVector.sub(desired, velocity);
+      //PVector steer = PVector.sub(velocity, desired);
+      steer.limit(maxforce); 
+      //applyForce(new PVector(0.2,0.1));
+      //applyForce(new PVector(desired.x*0.01,desired.y*0.01));
+      //applyForce(new PVector(desired.x*0.01,0));
+      applyForce(steer);
     } else {
-
-      desired.mult(maxspeed);
+      followingHand=false;
     }
-    PVector steer = PVector.sub(desired, velocity);
-    //PVector steer = PVector.sub(velocity, desired);
-    steer.limit(maxforce); 
-    //applyForce(new PVector(0.2,0.1));
-    //applyForce(new PVector(desired.x*0.01,desired.y*0.01));
-    //applyForce(new PVector(desired.x*0.01,0));
-    applyForce(steer);
   }
 
+  boolean isFollowingHand() {
+    return followingHand;
+  }
   void applyForce(PVector force) {
     force.div(r);//mass
     acceleration.add(force);

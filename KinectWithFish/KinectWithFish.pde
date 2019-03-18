@@ -9,11 +9,16 @@ int maxD = 2000; // 4.5mx
 int minD = 50;  //  50cm
 
 ArrayList<XYAverageZone> zones = new ArrayList<XYAverageZone>();
-int xx=400;
-int yy=400;
+int xx=200;
+int yy=200;
 //============================================= Kinect and Average
-//private Fish f;
+private Fish f;
 private ArrayList<Fish> fish = new ArrayList<Fish>();
+float iC;
+float iS;
+float flowX;
+float flowY;
+boolean seekHand= false;
 
 void settings() {
   fullScreen(P3D);
@@ -34,29 +39,20 @@ void setup() {
     }
   }
   println(zones.size());
-  for (int i=0; i<100; i++) {
-    Fish f =  new Fish(random(0, width), random(0, height), 10-(i*0.09), 100-(i*0.8));
+
+  for (int i=0; i<50; i++) {
+    f = new Fish(random(width), random(height));
     f.start();
     fish.add(f);
   }
 }
 
 void draw() {
-  background(0, 60);
-  //cloudPointAnalizis();
-  
-  for (Fish f : fish) {
-    //f.move();
-    for (XYAverageZone xy : zones) {
-      if (xy.IsAverageCreated()==true) {
-        //ellipse(xy.getAverageXY()[0], xy.getAverageXY()[1], 50, 50);
-        //f.change(xy.getAverageXY()[0], xy.getAverageXY()[1]);
-      }
-    }
-    //f.change(mouseX, mouseY);
-  }
-
-  displayGraphics();
+  fill(10, 10, 30);
+  rect(0, 0, width, height);
+  cloudPointAnalizis();
+  defaultMovemet();
+  displayFish();
 }
 
 void cloudPointAnalizis() {
@@ -118,24 +114,39 @@ void cloudPointAnalizis() {
     }
   }
 }
+void defaultMovemet() {
+  float ampS = height*0.4;
+  float ampC = width*0.4;
+  iS+=0.02;
+  iC+=0.01;
+  float sin = sin(iS)*ampS;
+  float cos = cos(iC)*ampC;
+  flowX = (width/2)+(cos);
+  flowY = (height/2)+(sin);
+}
+void displayFish() {
+  for (Fish v : fish) {
+    v.display();
+    //v.seek(new PVector(mouseX, mouseY));
 
-void displayGraphics() {
-  
+    for (XYAverageZone xy : zones) {
+      if (xy.IsAverageCreated()==true) {
+        v.arrive(new PVector( xy.getAverageXY()[0], xy.getAverageXY()[1]));
+        if (v.isFollowingHand()==true) {
+          break;
+        }
+      }
+    }
 
-  for (Fish f : fish) {
-    float a = atan2(f.getTargetY()-height/2, f.getTargetX()-width/2);
-    //float a = atan2(f.getTargetY(), f.getTargetX());
 
-    noStroke();
-    fill(0, f.getA(), 100);
-    pushMatrix();
-    translate(f.getX(), f.getY());
-    rotate(a);
-    rectMode(CENTER);
-    rect(0, 0, 40+f.getD(), f.getD());
-    fill(255, 0, 0);
-    ellipse(10+f.getD(), 0, 10, 10);
-    popMatrix();
+
+
+    if (v.isFollowingHand()==false) {
+      v.seek(new PVector(flowX, flowY));
+    }
+
+
+    //v.stayWithinWalls();
   }
 }
 void mousePressed() {
