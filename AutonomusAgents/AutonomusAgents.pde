@@ -28,7 +28,8 @@ void settings() {
 }
 
 void setup() {
-  for (int i=0; i<100; i++) {
+  noCursor();
+  for (int i=0; i<150; i++) {
     v = new Vehicle(random(width), random(height));
     v.start();
     vs.add(v);
@@ -37,7 +38,7 @@ void setup() {
 
 void draw() {
 
-  background(20,20,80);
+  background(10,10,30);
   //background(255, 5);
   fill(255);
   ellipse(mouseX, mouseY, 50, 50);
@@ -50,6 +51,8 @@ void draw() {
 }
 
 void mouseDragged() {
+  fill(255,0,0);
+   ellipse(mouseX, mouseY, 50, 50);
   for (Vehicle v : vs) {
     v.flee(new PVector(mouseX, mouseY));
   }

@@ -72,7 +72,9 @@ class Vehicle extends Thread {
     PVector steer = PVector.sub(desired, velocity);
     //PVector steer = PVector.sub(velocity, desired);
     steer.limit(maxforce); 
-    applyForce(new PVector(0.1,0.1));
+    //applyForce(new PVector(0.2,0.1));
+    //applyForce(new PVector(desired.x*0.01,desired.y*0.01));
+    //applyForce(new PVector(desired.x*0.01,0));
     applyForce(steer);
   }
 
